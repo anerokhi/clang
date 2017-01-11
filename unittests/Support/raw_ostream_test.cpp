@@ -70,8 +70,8 @@ TEST(raw_ostreamTest, Types_Buffered) {
 
   // void*
   EXPECT_EQ("0x0", printToString((void*) nullptr));
-  EXPECT_EQ("0xbeef", printToString((void*) 0xbeef));
-  EXPECT_EQ("0xdeadbeef", printToString((void*) 0xdeadbeef));
+  EXPECT_EQ("0xbeef", printToString((void*) 0xbeefLL));
+  EXPECT_EQ("0xdeadbeef", printToString((void*) 0xdeadbeefLL));
 
   // Min and max.
   EXPECT_EQ("18446744073709551615", printToString(UINT64_MAX));
@@ -101,8 +101,8 @@ TEST(raw_ostreamTest, Types_Unbuffered) {
 
   // void*
   EXPECT_EQ("0x0", printToStringUnbuffered((void*) nullptr));
-  EXPECT_EQ("0xbeef", printToStringUnbuffered((void*) 0xbeef));
-  EXPECT_EQ("0xdeadbeef", printToStringUnbuffered((void*) 0xdeadbeef));
+  EXPECT_EQ("0xbeef", printToStringUnbuffered((void*) 0xbeefLL));
+  EXPECT_EQ("0xdeadbeef", printToStringUnbuffered((void*) 0xdeadbeefLL));
 
   // Min and max.
   EXPECT_EQ("18446744073709551615", printToStringUnbuffered(UINT64_MAX));
@@ -162,6 +162,8 @@ TEST(raw_ostreamTest, FormatHex) {
   EXPECT_EQ("0x1",        printToString(format_hex(1, 3), 3));
   EXPECT_EQ("0x12",       printToString(format_hex(0x12, 3), 4));
   EXPECT_EQ("0x123",      printToString(format_hex(0x123, 3), 5));
+  EXPECT_EQ("FF",         printToString(format_hex_no_prefix(0xFF, 2, true), 4));
+  EXPECT_EQ("ABCD",       printToString(format_hex_no_prefix(0xABCD, 2, true), 4));
   EXPECT_EQ("0xffffffffffffffff",     
                           printToString(format_hex(UINT64_MAX, 18), 18));
   EXPECT_EQ("0x8000000000000000",     

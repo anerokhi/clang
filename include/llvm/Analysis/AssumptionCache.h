@@ -22,6 +22,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include <memory>
 
@@ -61,7 +62,7 @@ public:
 
   /// \brief Add an @llvm.assume intrinsic to this function's cache.
   ///
-  /// The call passed in must be an instruction within this fuction and must
+  /// The call passed in must be an instruction within this function and must
   /// not already be in the cache.
   void registerAssumption(CallInst *CI);
 
@@ -74,7 +75,7 @@ public:
   }
 
   /// \brief Access the list of assumption handles currently tracked for this
-  /// fuction.
+  /// function.
   ///
   /// Note that these produce weak handles that may be null. The caller must
   /// handle that case.
@@ -88,6 +89,37 @@ public:
   }
 };
 
+/// \brief A function analysis which provides an \c AssumptionCache.
+///
+/// This analysis is intended for use with the new pass manager and will vend
+/// assumption caches for a given function.
+class AssumptionAnalysis : public AnalysisInfoMixin<AssumptionAnalysis> {
+  friend AnalysisInfoMixin<AssumptionAnalysis>;
+  static char PassID;
+
+public:
+  typedef AssumptionCache Result;
+
+  AssumptionAnalysis() {}
+  AssumptionAnalysis(const AssumptionAnalysis &Arg) {}
+  AssumptionAnalysis(AssumptionAnalysis &&Arg) {}
+  AssumptionAnalysis &operator=(const AssumptionAnalysis &RHS) { return *this; }
+  AssumptionAnalysis &operator=(AssumptionAnalysis &&RHS) { return *this; }
+
+  AssumptionCache run(Function &F, FunctionAnalysisManager &) {
+    return AssumptionCache(F);
+  }
+};
+
+/// \brief Printer pass for the \c AssumptionAnalysis results.
+class AssumptionPrinterPass : public PassInfoMixin<AssumptionPrinterPass> {
+  raw_ostream &OS;
+
+public:
+  explicit AssumptionPrinterPass(raw_ostream &OS) : OS(OS) {}
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> &AM);
+};
+
 /// \brief An immutable pass that tracks lazily created \c AssumptionCache
 /// objects.
 ///
@@ -99,7 +131,7 @@ public:
 class AssumptionCacheTracker : public ImmutablePass {
   /// A callback value handle applied to function objects, which we use to
   /// delete our cache of intrinsics for a function when it is deleted.
-  class FunctionCallbackVH : public CallbackVH {
+  class FunctionCallbackVH final : public CallbackVH {
     AssumptionCacheTracker *ACT;
     void deleted() override;
 
@@ -124,7 +156,7 @@ public:
   AssumptionCache &getAssumptionCache(Function &F);
 
   AssumptionCacheTracker();
-  ~AssumptionCacheTracker();
+  ~AssumptionCacheTracker() override;
 
   void releaseMemory() override { AssumptionCaches.shrink_and_clear(); }
 

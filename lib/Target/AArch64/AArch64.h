@@ -27,6 +27,7 @@ class FunctionPass;
 class MachineFunctionPass;
 
 FunctionPass *createAArch64DeadRegisterDefinitions();
+FunctionPass *createAArch64RedundantCopyEliminationPass();
 FunctionPass *createAArch64ConditionalCompares();
 FunctionPass *createAArch64AdvSIMDScalar();
 FunctionPass *createAArch64BranchRelaxation();
@@ -40,13 +41,12 @@ FunctionPass *createAArch64ConditionOptimizerPass();
 FunctionPass *createAArch64AddressTypePromotionPass();
 FunctionPass *createAArch64A57FPLoadBalancing();
 FunctionPass *createAArch64A53Fix835769();
-/// \brief Creates an ARM-specific Target Transformation Info pass.
-ImmutablePass *
-createAArch64TargetTransformInfoPass(const AArch64TargetMachine *TM);
 
 FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
 FunctionPass *createAArch64CollectLOHPass();
+
+void initializeAArch64ExpandPseudoPass(PassRegistry&);
 } // end namespace llvm
 
 #endif

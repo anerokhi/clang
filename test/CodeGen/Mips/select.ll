@@ -1,9 +1,9 @@
-; RUN: llc < %s -march=mipsel   -mcpu=mips32   | FileCheck %s -check-prefix=ALL -check-prefix=32
-; RUN: llc < %s -march=mipsel   -mcpu=mips32r2 | FileCheck %s -check-prefix=ALL -check-prefix=32R2
-; RUN: llc < %s -march=mipsel   -mcpu=mips32r6 | FileCheck %s -check-prefix=ALL -check-prefix=32R6
-; RUN: llc < %s -march=mips64el -mcpu=mips64   | FileCheck %s -check-prefix=ALL -check-prefix=64
-; RUN: llc < %s -march=mips64el -mcpu=mips64r2 | FileCheck %s -check-prefix=ALL -check-prefix=64R2
-; RUN: llc < %s -march=mips64el -mcpu=mips64r6 | FileCheck %s -check-prefix=ALL -check-prefix=64R6
+; RUN: llc < %s -march=mipsel   -mcpu=mips32   -relocation-model=pic | FileCheck %s -check-prefixes=ALL,32
+; RUN: llc < %s -march=mipsel   -mcpu=mips32r2 -relocation-model=pic | FileCheck %s -check-prefixes=ALL,32R2
+; RUN: llc < %s -march=mipsel   -mcpu=mips32r6 -relocation-model=pic | FileCheck %s -check-prefixes=ALL,32R6
+; RUN: llc < %s -march=mips64el -mcpu=mips64   -relocation-model=pic | FileCheck %s -check-prefixes=ALL,64
+; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -relocation-model=pic | FileCheck %s -check-prefixes=ALL,64R2
+; RUN: llc < %s -march=mips64el -mcpu=mips64r6 -relocation-model=pic | FileCheck %s -check-prefixes=ALL,64R6
 
 @d2 = external global double
 @d3 = external global double
@@ -700,8 +700,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp oeq double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -777,8 +777,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp olt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -854,8 +854,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp ogt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond

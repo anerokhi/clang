@@ -75,3 +75,73 @@ define i64 @MACLongTest5(i64 %c, i32 %a, i32 %b) {
   %add = add i64 %mul, %c
   ret i64 %add
 }
+
+define i64 @MACLongTest6(i32 %a, i32 %b, i32 %c, i32 %d) {
+;CHECK-LABEL: MACLongTest6:
+;CHECK: smull   r12, lr, r1, r0
+;CHECK: smlal   r12, lr, r3, r2
+  %conv = sext i32 %a to i64
+  %conv1 = sext i32 %b to i64
+  %mul = mul nsw i64 %conv1, %conv
+  %conv2 = sext i32 %c to i64
+  %conv3 = sext i32 %d to i64
+  %mul4 = mul nsw i64 %conv3, %conv2
+  %add = add nsw i64 %mul4, %mul
+  ret i64 %add
+}
+
+define i64 @MACLongTest7(i64 %acc, i32 %lhs, i32 %rhs) {
+;CHECK-LABEL: MACLongTest7:
+;CHECK-NOT: smlal
+  %conv = sext i32 %lhs to i64
+  %conv1 = sext i32 %rhs to i64
+  %mul = mul nsw i64 %conv1, %conv
+  %shl = shl i64 %mul, 32
+  %shr = lshr i64 %mul, 32
+  %or = or i64 %shl, %shr
+  %add = add i64 %or, %acc
+  ret i64 %add
+}
+
+define i64 @MACLongTest8(i64 %acc, i32 %lhs, i32 %rhs) {
+;CHECK-LABEL: MACLongTest8:
+;CHECK-NOT: smlal
+  %conv = zext i32 %lhs to i64
+  %conv1 = zext i32 %rhs to i64
+  %mul = mul nuw i64 %conv1, %conv
+  %and = and i64 %mul, 4294967295
+  %shl = shl i64 %mul, 32
+  %or = or i64 %and, %shl
+  %add = add i64 %or, %acc
+  ret i64 %add
+}
+
+define i64 @MACLongTest9(i32 %lhs, i32 %rhs, i32 %lo, i32 %hi) {
+;CHECK-LABEL: MACLongTest9:
+;CHECK-V7-LE:umaal
+;CHECK-V7-BE:umaal
+;CHECK-NOT:umaal
+  %conv = zext i32 %lhs to i64
+  %conv1 = zext i32 %rhs to i64
+  %mul = mul nuw i64 %conv1, %conv
+  %conv2 = zext i32 %lo to i64
+  %add = add i64 %mul, %conv2
+  %conv3 = zext i32 %hi to i64
+  %add2 = add i64 %add, %conv3
+  ret i64 %add2
+}
+
+define i64 @MACLongTest10(i32 %lhs, i32 %rhs, i32 %lo, i32 %hi) {
+;CHECK-LABEL: MACLongTest10:
+;CHECK-V7-LE:umaal
+;CHECK-V7-BE:umaal
+;CHECK-NOT:umaal
+  %conv = zext i32 %lhs to i64
+  %conv1 = zext i32 %rhs to i64
+  %mul = mul nuw i64 %conv1, %conv
+  %conv2 = zext i32 %lo to i64
+  %conv3 = zext i32 %hi to i64
+  %add = add i64 %conv2, %conv3
+  %add2 = add i64 %add, %mul
+  ret i64 %add2
+}

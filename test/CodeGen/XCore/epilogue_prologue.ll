@@ -101,7 +101,7 @@ entry:
 
 ; FP + large frame: spill FP+SR+R4+LR = entsp 3 + 200000  + extsp 1
 ; CHECKFP: .section .cp.rodata.cst4,"aMc",@progbits,4
-; CHECKFP-NEXT: .align 4
+; CHECKFP-NEXT: .p2align 2
 ; CHECKFP-NEXT: .LCPI[[CNST0:[0-9_]+]]:
 ; CHECKFP-NEXT: .long 200002
 ; CHECKFP-NEXT: .LCPI[[CNST1:[0-9_]+]]:
@@ -154,7 +154,7 @@ entry:
 ;
 ; !FP + large frame: spill SR+SR+R4+LR = entsp 4 + 200000
 ; CHECK: .section .cp.rodata.cst4,"aMc",@progbits,4
-; CHECK-NEXT: .align 4
+; CHECK-NEXT: .p2align 2
 ; CHECK-NEXT: .LCPI[[CNST0:[0-9_]+]]:
 ; CHECK-NEXT: .long 200003
 ; CHECK-NEXT: .LCPI[[CNST1:[0-9_]+]]:
@@ -199,9 +199,9 @@ declare void @f5(i32*)
 define i32 @f6(i32 %i) {
 entry:
   %0 = alloca [200000 x i32]
-  %1 = getelementptr inbounds [200000 x i32]* %0, i32 0, i32 0
+  %1 = getelementptr inbounds [200000 x i32], [200000 x i32]* %0, i32 0, i32 0
   call void @f5(i32* %1)
-  %2 = getelementptr inbounds [200000 x i32]* %0, i32 0, i32 199999
+  %2 = getelementptr inbounds [200000 x i32], [200000 x i32]* %0, i32 0, i32 199999
   call void @f5(i32* %2)
   ret i32 %i
 }
@@ -229,7 +229,7 @@ entry:
 define void @f8() nounwind {
 entry:
   %0 = alloca [256 x i32]
-  %1 = getelementptr inbounds [256 x i32]* %0, i32 0, i32 253
+  %1 = getelementptr inbounds [256 x i32], [256 x i32]* %0, i32 0, i32 253
   call void @f5(i32* %1)
   ret void
 }
@@ -257,7 +257,7 @@ entry:
 define void @f9() nounwind {
 entry:
   %0 = alloca [32768 x i32]
-  %1 = getelementptr inbounds [32768 x i32]* %0, i32 0, i32 32765
+  %1 = getelementptr inbounds [32768 x i32], [32768 x i32]* %0, i32 0, i32 32765
   call void @f5(i32* %1)
   ret void
 }

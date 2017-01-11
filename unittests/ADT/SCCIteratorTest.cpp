@@ -39,8 +39,6 @@ public:
     NodeSubset() : Elements(0) {
       assert(N <= sizeof(BitVector)*CHAR_BIT && "Graph too big!");
     }
-    /// NodeSubset - Copy constructor.
-    NodeSubset(const NodeSubset &other) : Elements(other.Elements) {}
 
     /// Comparison operators.
     bool operator==(const NodeSubset &other) const {
@@ -232,6 +230,7 @@ public:
 template <unsigned N>
 struct GraphTraits<Graph<N> > {
   typedef typename Graph<N>::NodeType NodeType;
+  typedef typename Graph<N>::NodeType *NodeRef;
   typedef typename Graph<N>::ChildIterator ChildIteratorType;
 
  static inline NodeType *getEntryNode(const Graph<N> &G) { return G.AccessNode(0); }
@@ -252,7 +251,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
   typedef Graph<NUM_NODES> GT;
 
   /// Enumerate all graphs using NUM_GRAPHS bits.
-  assert(NUM_GRAPHS < sizeof(unsigned) * CHAR_BIT && "Too many graphs!");
+  static_assert(NUM_GRAPHS < sizeof(unsigned) * CHAR_BIT, "Too many graphs!");
   for (unsigned GraphDescriptor = 0; GraphDescriptor < (1U << NUM_GRAPHS);
        ++GraphDescriptor) {
     GT G;
