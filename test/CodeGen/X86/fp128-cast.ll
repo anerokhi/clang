@@ -46,7 +46,7 @@ entry:
 ; X64-LABEL: TestFPExtF64_F128:
 ; X64:       movsd      vf64(%rip), %xmm0
 ; X64-NEXT:  callq      __extenddftf2
-; X64-NEXT:  movapd     %xmm0, vf128(%rip)
+; X64-NEXT:  movaps     %xmm0, vf128(%rip)
 ; X64:       ret
 }
 
@@ -61,10 +61,10 @@ entry:
 ; X32:       retl
 ;
 ; X64-LABEL: TestFPToSIF128_I32:
-; X64:        movaps     vf128(%rip), %xmm0
-; X64-NEXT:   callq      __fixtfsi
-; X64-NEXT:   movl       %eax, vi32(%rip)
-; X64:        retq
+; X64:       movaps     vf128(%rip), %xmm0
+; X64-NEXT:  callq      __fixtfsi
+; X64-NEXT:  movl       %eax, vi32(%rip)
+; X64:       retq
 }
 
 define void @TestFPToUIF128_U32() {
@@ -78,10 +78,10 @@ entry:
 ; X32:       retl
 ;
 ; X64-LABEL: TestFPToUIF128_U32:
-; X64:        movaps     vf128(%rip), %xmm0
-; X64-NEXT:   callq      __fixunstfsi
-; X64-NEXT:   movl       %eax, vu32(%rip)
-; X64:        retq
+; X64:       movaps     vf128(%rip), %xmm0
+; X64-NEXT:  callq      __fixunstfsi
+; X64-NEXT:  movl       %eax, vu32(%rip)
+; X64:       retq
 }
 
 define void @TestFPToSIF128_I64() {
@@ -152,7 +152,7 @@ entry:
 ; X32:       retl
 ;
 ; X64-LABEL: TestFPTruncF128_F64:
-; X64:       movapd      vf128(%rip), %xmm0
+; X64:       movaps      vf128(%rip), %xmm0
 ; X64-NEXT:  callq       __trunctfdf2
 ; X64-NEXT:  movsd       %xmm0, vf64(%rip)
 ; X64:       retq
@@ -351,8 +351,10 @@ cleanup:                                          ; preds = %entry, %if.then
 ;
 ; X64-LABEL: TestTruncCopysign:
 ; X64:       callq __trunctfdf2
-; X64-NEXT:  andpd {{.*}}, %xmm0
-; X64-NEXT:  orpd {{.*}}, %xmm0
+; X64-NEXT:  movsd {{.*}}, %xmm1
+; X64-NEXT:  movlhps %xmm1, %xmm1
+; X64-NEXT:  andps {{.*}}, %xmm0
+; X64-NEXT:  orps %xmm1, %xmm0
 ; X64-NEXT:  callq __extenddftf2
 ; X64:       retq
 }
