@@ -31,6 +31,11 @@ public:
 
 protected:
   SmartPtrTypeMatcher getSmartPointerTypeMatcher() const override;
+
+  bool isLanguageVersionSupported(const LangOptions &LangOpts) const override;
+
+private:
+  const bool RequireCPlusPlus14;
 };
 
 } // namespace modernize
@@ -38,4 +43,3 @@ protected:
 } // namespace clang
 
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MODERNIZE_MAKE_UNIQUE_H
-

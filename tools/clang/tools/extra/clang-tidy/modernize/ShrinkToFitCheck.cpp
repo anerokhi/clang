@@ -20,6 +20,9 @@ namespace tidy {
 namespace modernize {
 
 void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
+  if (!getLangOpts().CPlusPlus11)
+    return;
+
   // Swap as a function need not to be considered, because rvalue can not
   // be bound to a non-const reference.
   const auto ShrinkableAsMember =
@@ -40,8 +43,8 @@ void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(
       cxxMemberCallExpr(
-          on(hasType(namedDecl(
-              hasAnyName("std::basic_string", "std::deque", "std::vector")))),
+          on(hasType(hasCanonicalType(hasDeclaration(namedDecl(
+              hasAnyName("std::basic_string", "std::deque", "std::vector")))))),
           callee(cxxMethodDecl(hasName("swap"))),
           has(ignoringParenImpCasts(memberExpr(hasDescendant(CopyCtorCall)))),
           hasArgument(0, SwapParam.bind("ContainerToShrink")),
@@ -51,17 +54,13 @@ void ShrinkToFitCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void ShrinkToFitCheck::check(const MatchFinder::MatchResult &Result) {
-  const LangOptions &Opts = Result.Context->getLangOpts();
-
-  if (!Opts.CPlusPlus11)
-    return;
-
   const auto *MemberCall =
       Result.Nodes.getNodeAs<CXXMemberCallExpr>("CopyAndSwapTrick");
   const auto *Container = Result.Nodes.getNodeAs<Expr>("ContainerToShrink");
   FixItHint Hint;
 
   if (!MemberCall->getLocStart().isMacroID()) {
+    const LangOptions &Opts = getLangOpts();
     std::string ReplacementText;
     if (const auto *UnaryOp = llvm::dyn_cast<UnaryOperator>(Container)) {
       ReplacementText =

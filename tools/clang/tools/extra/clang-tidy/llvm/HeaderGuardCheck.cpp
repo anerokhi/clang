@@ -13,9 +13,9 @@ namespace clang {
 namespace tidy {
 namespace llvm {
 
-bool LLVMHeaderGuardCheck::shouldFixHeaderGuard(StringRef Filename) {
-  return Filename.endswith(".h");
-}
+LLVMHeaderGuardCheck::LLVMHeaderGuardCheck(StringRef Name,
+                                           ClangTidyContext *Context)
+    : HeaderGuardCheck(Name, Context) {}
 
 std::string LLVMHeaderGuardCheck::getHeaderGuard(StringRef Filename,
                                                  StringRef OldGuard) {

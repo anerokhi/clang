@@ -16,21 +16,21 @@ X
 
 // CHECK: ---
 // CHECK-NEXT: - Callback: MacroDefined
-// CHECK-NEXT:   MacroNameTok: __STDC__
+// CHECK:        MacroNameTok: __STDC__
 // CHECK-NEXT:   MacroDirective: MD_Define
 // CHECK-NEXT: - Callback: MacroDefined
-// CHECK-NEXT:   MacroNameTok: __STDC_HOSTED__
+// CHECK:        MacroNameTok: __STDC_HOSTED__
 // CHECK-NEXT:   MacroDirective: MD_Define
 // CHECK-NEXT: - Callback: MacroDefined
-// CHECK-NEXT:   MacroNameTok: __cplusplus
+// CHECK:        MacroNameTok: __cplusplus
 // CHECK-NEXT:   MacroDirective: MD_Define
 // CHECK-NEXT: - Callback: MacroDefined
-// CHECK-NEXT:   MacroNameTok: __STDC_UTF_16__
+// CHECK:        MacroNameTok: __STDC_UTF_16__
 // CHECK-NEXT:   MacroDirective: MD_Define
 // CHECK-NEXT: - Callback: MacroDefined
-// CHECK-NEXT:   MacroNameTok: __STDC_UTF_32__
+// CHECK:        MacroNameTok: __STDC_UTF_32__
 // CHECK-NEXT:   MacroDirective: MD_Define
-// CHECK-NEXT: - Callback: MacroDefined
+// CHECK:      - Callback: MacroDefined
 // CHECK-NEXT:   MacroNameTok: MACRO
 // CHECK-NEXT:   MacroDirective: MD_Define
 // CHECK-NEXT: - Callback: MacroExpands
@@ -64,7 +64,7 @@ X
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:9:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:2"
 // CHECK-NEXT: - Callback: SourceRangeSkipped
-// CHECK-NEXT:   Range: ["{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:2", "{{.*}}{{[/\\]}}pp-trace-macro.cpp:9:2"]
+// CHECK-NEXT:   Range: ["{{.*}}{{[/\\]}}pp-trace-macro.cpp:8:1", "{{.*}}{{[/\\]}}pp-trace-macro.cpp:9:2"]
 // CHECK-NEXT: - Callback: MacroDefined
 // CHECK-NEXT:   MacroNameTok: FUNCMACRO
 // CHECK-NEXT:   MacroDirective: MD_Define

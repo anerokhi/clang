@@ -11,7 +11,11 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "../misc/UnconventionalAssignOperatorCheck.h"
+#include "AvoidGotoCheck.h"
 #include "InterfacesGlobalInitCheck.h"
+#include "NarrowingConversionsCheck.h"
+#include "NoMallocCheck.h"
+#include "OwningMemoryCheck.h"
 #include "ProBoundsArrayToPointerDecayCheck.h"
 #include "ProBoundsConstantArrayIndexCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
@@ -22,6 +26,8 @@
 #include "ProTypeStaticCastDowncastCheck.h"
 #include "ProTypeUnionAccessCheck.h"
 #include "ProTypeVarargCheck.h"
+#include "SlicingCheck.h"
+#include "SpecialMemberFunctionsCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -31,8 +37,15 @@ namespace cppcoreguidelines {
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<AvoidGotoCheck>(
+        "cppcoreguidelines-avoid-goto");
     CheckFactories.registerCheck<InterfacesGlobalInitCheck>(
         "cppcoreguidelines-interfaces-global-init");
+    CheckFactories.registerCheck<NarrowingConversionsCheck>(
+        "cppcoreguidelines-narrowing-conversions");
+    CheckFactories.registerCheck<NoMallocCheck>("cppcoreguidelines-no-malloc");
+    CheckFactories.registerCheck<OwningMemoryCheck>(
+        "cppcoreguidelines-owning-memory");
     CheckFactories.registerCheck<ProBoundsArrayToPointerDecayCheck>(
         "cppcoreguidelines-pro-bounds-array-to-pointer-decay");
     CheckFactories.registerCheck<ProBoundsConstantArrayIndexCheck>(
@@ -53,6 +66,9 @@ public:
         "cppcoreguidelines-pro-type-union-access");
     CheckFactories.registerCheck<ProTypeVarargCheck>(
         "cppcoreguidelines-pro-type-vararg");
+    CheckFactories.registerCheck<SpecialMemberFunctionsCheck>(
+        "cppcoreguidelines-special-member-functions");
+    CheckFactories.registerCheck<SlicingCheck>("cppcoreguidelines-slicing");
     CheckFactories.registerCheck<misc::UnconventionalAssignOperatorCheck>(
         "cppcoreguidelines-c-copy-assignment-signature");
   }

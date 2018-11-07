@@ -34,13 +34,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Execution.h"
 #include "clang/Tooling/Refactoring.h"
+#include "clang/Tooling/Refactoring/AtomicChange.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -53,18 +55,32 @@ using namespace llvm;
 
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
- public:
-  ToolTemplateCallback(Replacements *Replace) : Replace(Replace) {}
+public:
+  ToolTemplateCallback(ExecutionContext &Context) : Context(Context) {}
 
   void run(const MatchFinder::MatchResult &Result) override {
-    // TODO: This routine will get called for each thing that the matchers find.
+    // TODO: This routine will get called for each thing that the matchers
+    // find.
     // At this point, you can examine the match, and do whatever you want,
     // including replacing the matched text with other text
-    (void)Replace; // This to prevent an "unused member variable" warning;
+    auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+    assert(D);
+    // Use AtomicChange to get a key.
+    if (D->getLocStart().isValid()) {
+      AtomicChange Change(*Result.SourceManager, D->getLocStart());
+      Context.reportResult(Change.getKey(), D->getQualifiedNameAsString());
+    }
   }
 
- private:
-  Replacements *Replace;
+  void onStartOfTranslationUnit() override {
+    Context.reportResult("START", "Start of TU.");
+  }
+  void onEndOfTranslationUnit() override {
+    Context.reportResult("END", "End of TU.");
+  }
+
+private:
+  ExecutionContext &Context;
 };
 } // end anonymous namespace
 
@@ -74,15 +90,33 @@ static cl::OptionCategory ToolTemplateCategory("tool-template options");
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
-  CommonOptionsParser OptionsParser(argc, argv, ToolTemplateCategory);
-  RefactoringTool Tool(OptionsParser.getCompilations(),
-                       OptionsParser.getSourcePathList());
+
+  auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
+      argc, argv, ToolTemplateCategory);
+
+  if (!Executor) {
+    llvm::errs() << llvm::toString(Executor.takeError()) << "\n";
+    return 1;
+  }
+
   ast_matchers::MatchFinder Finder;
-  ToolTemplateCallback Callback(&Tool.getReplacements());
+  ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
   // TODO: Put your matchers here.
   // Use Finder.addMatcher(...) to define the patterns in the AST that you
   // want to match against. You are not limited to just one matcher!
+  //
+  // This is a sample matcher:
+  Finder.addMatcher(
+      namedDecl(cxxRecordDecl(), isExpansionInMainFile()).bind("decl"),
+      &Callback);
 
-  return Tool.run(newFrontendActionFactory(&Finder).get());
+  auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
+  if (Err) {
+    llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+  }
+  Executor->get()->getToolResults()->forEachResult(
+      [](llvm::StringRef key, llvm::StringRef value) {
+        llvm::errs() << "----" << key.str() << "\n" << value.str() << "\n";
+      });
 }

@@ -26,7 +26,7 @@ const char CastSequence[] = "sequence";
 
 AST_MATCHER(Type, sugaredNullptrType) {
   const Type *DesugaredType = Node.getUnqualifiedDesugaredType();
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(DesugaredType))
+  if (const auto *BT = dyn_cast<BuiltinType>(DesugaredType))
     return BT->getKind() == BuiltinType::NullPtr;
   return false;
 }
@@ -38,8 +38,8 @@ AST_MATCHER(Type, sugaredNullptrType) {
 /// can be replaced instead of just the inner-most implicit cast.
 StatementMatcher makeCastSequenceMatcher() {
   StatementMatcher ImplicitCastToNull = implicitCastExpr(
-      anyOf(hasCastKind(CK_NullToPointer),
-            hasCastKind(CK_NullToMemberPointer)),
+      anyOf(hasCastKind(CK_NullToPointer), hasCastKind(CK_NullToMemberPointer)),
+      unless(hasImplicitDestinationType(qualType(substTemplateTypeParmType()))),
       unless(hasSourceExpression(hasType(sugaredNullptrType()))));
 
   return castExpr(anyOf(ImplicitCastToNull,
@@ -189,13 +189,25 @@ public:
   // Only VisitStmt is overridden as we shouldn't find other base AST types
   // within a cast expression.
   bool VisitStmt(Stmt *S) {
-    CastExpr *C = dyn_cast<CastExpr>(S);
+    auto *C = dyn_cast<CastExpr>(S);
+    // Catch the castExpr inside cxxDefaultArgExpr.
+    if (auto *E = dyn_cast<CXXDefaultArgExpr>(S)) {
+      C = dyn_cast<CastExpr>(E->getExpr());
+      FirstSubExpr = nullptr;
+    }
     if (!C) {
       FirstSubExpr = nullptr;
       return true;
     }
+
+    auto* CastSubExpr = C->getSubExpr()->IgnoreParens();
+    // Ignore cast expressions which cast nullptr literal.
+    if (isa<CXXNullPtrLiteralExpr>(CastSubExpr)) {
+      return true;
+    }
+
     if (!FirstSubExpr)
-      FirstSubExpr = C->getSubExpr()->IgnoreParens();
+      FirstSubExpr = CastSubExpr;
 
     if (C->getCastKind() != CK_NullToPointer &&
         C->getCastKind() != CK_NullToMemberPointer) {
@@ -213,17 +225,17 @@ public:
     if (SM.isMacroArgExpansion(StartLoc) && SM.isMacroArgExpansion(EndLoc)) {
       SourceLocation FileLocStart = SM.getFileLoc(StartLoc),
                      FileLocEnd = SM.getFileLoc(EndLoc);
-      SourceLocation ImmediateMarcoArgLoc, MacroLoc;
+      SourceLocation ImmediateMacroArgLoc, MacroLoc;
       // Skip NULL macros used in macro.
-      if (!getMacroAndArgLocations(StartLoc, ImmediateMarcoArgLoc, MacroLoc) ||
-          ImmediateMarcoArgLoc != FileLocStart)
+      if (!getMacroAndArgLocations(StartLoc, ImmediateMacroArgLoc, MacroLoc) ||
+          ImmediateMacroArgLoc != FileLocStart)
         return skipSubTree();
 
       if (isReplaceableRange(FileLocStart, FileLocEnd, SM) &&
           allArgUsesValid(C)) {
         replaceWithNullptr(Check, SM, FileLocStart, FileLocEnd);
       }
-      return skipSubTree();
+      return true;
     }
 
     if (SM.isMacroBodyExpansion(StartLoc) && SM.isMacroBodyExpansion(EndLoc)) {
@@ -320,7 +332,7 @@ private:
                NullMacros.end();
       }
 
-      MacroLoc = SM.getExpansionRange(ArgLoc).first;
+      MacroLoc = SM.getExpansionRange(ArgLoc).getBegin();
 
       ArgLoc = Expansion.getSpellingLoc().getLocWithOffset(LocInfo.second);
       if (ArgLoc.isFileID())
@@ -375,7 +387,7 @@ private:
         continue;
       }
 
-      MacroLoc = SM.getImmediateExpansionRange(Loc).first;
+      MacroLoc = SM.getImmediateExpansionRange(Loc).getBegin();
       if (MacroLoc.isFileID() && MacroLoc == TestMacroLoc) {
         // Match made.
         return true;

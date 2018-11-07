@@ -22,7 +22,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
-namespace misc {  
+namespace misc {
 
 StaticAssertCheck::StaticAssertCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context) {}
@@ -33,9 +33,11 @@ void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
   if (!(getLangOpts().CPlusPlus11 || getLangOpts().C11))
     return;
 
+  auto NegatedString = unaryOperator(
+      hasOperatorName("!"), hasUnaryOperand(ignoringImpCasts(stringLiteral())));
   auto IsAlwaysFalse =
       expr(anyOf(cxxBoolLiteral(equals(false)), integerLiteral(equals(0)),
-                 cxxNullPtrLiteralExpr(), gnuNullExpr()))
+                 cxxNullPtrLiteralExpr(), gnuNullExpr(), NegatedString))
           .bind("isAlwaysFalse");
   auto IsAlwaysFalseWithCast = ignoringParenImpCasts(anyOf(
       IsAlwaysFalse, cStyleCastExpr(has(ignoringParenImpCasts(IsAlwaysFalse)))

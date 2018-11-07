@@ -1,8 +1,12 @@
 set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangTidyCppCoreGuidelinesModule
+  AvoidGotoCheck.cpp
   CppCoreGuidelinesTidyModule.cpp
   InterfacesGlobalInitCheck.cpp
+  NarrowingConversionsCheck.cpp
+  NoMallocCheck.cpp
+  OwningMemoryCheck.cpp
   ProBoundsArrayToPointerDecayCheck.cpp
   ProBoundsConstantArrayIndexCheck.cpp
   ProBoundsPointerArithmeticCheck.cpp
@@ -13,6 +17,8 @@ add_clang_library(clangTidyCppCoreGuidelinesModule
   ProTypeStaticCastDowncastCheck.cpp
   ProTypeUnionAccessCheck.cpp
   ProTypeVarargCheck.cpp
+  SpecialMemberFunctionsCheck.cpp
+  SlicingCheck.cpp
 
   LINK_LIBS
   clangAST

@@ -21,12 +21,12 @@ public:
   // Implements PPCallbacks::InclusionDerective(). Records the names and source
   // locations of the inclusions in the main source file being processed.
   void InclusionDirective(SourceLocation HashLocation,
-                          const Token & IncludeToken,
-                          StringRef FileNameRef, bool IsAngled,
-                          CharSourceRange FileNameRange,
+                          const Token &IncludeToken, StringRef FileNameRef,
+                          bool IsAngled, CharSourceRange FileNameRange,
                           const FileEntry * /*IncludedFile*/,
                           StringRef /*SearchPath*/, StringRef /*RelativePath*/,
-                          const Module * /*ImportedModule*/) override {
+                          const Module * /*ImportedModule*/,
+                          SrcMgr::CharacteristicKind /*FileType*/) override {
     Inserter->AddInclude(FileNameRef, IsAngled, HashLocation,
                          IncludeToken.getEndLoc());
   }

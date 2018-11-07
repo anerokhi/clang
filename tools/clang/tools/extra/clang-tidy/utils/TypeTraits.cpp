@@ -41,11 +41,12 @@ bool hasDeletedCopyConstructor(QualType Type) {
 
 llvm::Optional<bool> isExpensiveToCopy(QualType Type,
                                        const ASTContext &Context) {
-  if (Type->isDependentType())
+  if (Type->isDependentType() || Type->isIncompleteType())
     return llvm::None;
   return !Type.isTriviallyCopyableType(Context) &&
          !classHasTrivialCopyAndDestroy(Type) &&
-         !hasDeletedCopyConstructor(Type);
+         !hasDeletedCopyConstructor(Type) &&
+         !Type->isObjCLifetimeType();
 }
 
 bool recordIsTriviallyDefaultConstructible(const RecordDecl &RecordDecl,
@@ -58,12 +59,18 @@ bool recordIsTriviallyDefaultConstructible(const RecordDecl &RecordDecl,
   // constructible.
   if (ClassDecl->hasUserProvidedDefaultConstructor())
     return false;
+  // A polymorphic class is not trivially constructible
+  if (ClassDecl->isPolymorphic())
+    return false;
   // A class is trivially constructible if it has a trivial default constructor.
   if (ClassDecl->hasTrivialDefaultConstructor())
     return true;
 
-  // If all its fields are trivially constructible.
+  // If all its fields are trivially constructible and have no default
+  // initializers.
   for (const FieldDecl *Field : ClassDecl->fields()) {
+    if (Field->hasInClassInitializer())
+      return false;
     if (!isTriviallyDefaultConstructible(Field->getType(), Context))
       return false;
   }
@@ -71,14 +78,15 @@ bool recordIsTriviallyDefaultConstructible(const RecordDecl &RecordDecl,
   for (const CXXBaseSpecifier &Base : ClassDecl->bases()) {
     if (!isTriviallyDefaultConstructible(Base.getType(), Context))
       return false;
+    if (Base.isVirtual())
+      return false;
   }
 
   return true;
 }
 
 // Based on QualType::isTrivial.
-bool isTriviallyDefaultConstructible(QualType Type,
-                                     const ASTContext &Context) {
+bool isTriviallyDefaultConstructible(QualType Type, const ASTContext &Context) {
   if (Type.isNull())
     return false;
 

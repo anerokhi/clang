@@ -37,13 +37,11 @@ public:
 
 private:
   QueryParser(StringRef Line, const QuerySession &QS)
-      : Begin(Line.begin()), End(Line.end()),
-        CompletionPos(nullptr), QS(QS) {}
+      : Begin(Line.begin()), End(Line.end()), CompletionPos(nullptr), QS(QS) {}
 
   StringRef lexWord();
 
   template <typename T> struct LexOrCompleteWord;
-  template <typename T> LexOrCompleteWord<T> lexOrCompleteWord(StringRef &Str);
 
   QueryRef parseSetBool(bool QuerySession::*Var);
   QueryRef parseSetOutputKind();
