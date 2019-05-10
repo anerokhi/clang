@@ -56,6 +56,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
@@ -74,6 +75,8 @@
 #define DEBUG_TYPE "mips-fastisel"
 
 using namespace llvm;
+
+extern cl::opt<bool> EmitJalrReloc;
 
 namespace {
 
@@ -953,6 +956,11 @@ bool MipsFastISel::selectBranch(const Instruction *I) {
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
   // For now, just try the simplest case where it's fed by a compare.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
+    MVT CIMVT =
+        TLI.getValueType(DL, CI->getOperand(0)->getType(), true).getSimpleVT();
+    if (CIMVT == MVT::i1)
+      return false;
+
     unsigned CondReg = getRegForValue(CI);
     BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::BGTZ))
         .addReg(CondReg)
@@ -1545,6 +1553,16 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   MIB.addRegMask(TRI.getCallPreservedMask(*FuncInfo.MF, CC));
 
   CLI.Call = MIB;
+
+  if (EmitJalrReloc && !Subtarget->inMips16Mode()) {
+    // Attach callee address to the instruction, let asm printer emit
+    // .reloc R_MIPS_JALR.
+    if (Symbol)
+      MIB.addSym(Symbol, MipsII::MO_JALR);
+    else
+      MIB.addSym(FuncInfo.MF->getContext().getOrCreateSymbol(
+	                   Addr.getGlobalValue()->getName()), MipsII::MO_JALR);
+  }
 
   // Finish off the call including any return values.
   return finishCall(CLI, RetVT, NumBytes);
